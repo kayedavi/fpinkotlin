@@ -159,7 +159,7 @@ object PolymorphicFunctions {
     // Exercise 3: Implement `curry`.
 
     // Note that `->` associates to the right, so we could
-    // write the return type as `A -> B -> C`
+    // write the return type as `(A) -> (B) -> C`
     fun <A, B, C> curry(f: (A, B) -> C): (A) -> ((B) -> C) =
             { a: A -> { b: B -> f(a, b) } }
 
@@ -182,5 +182,4 @@ object PolymorphicFunctions {
 
     fun <A, B, C> compose(f: (B) -> C, g: (A) -> B): (A) -> C =
             { a: A -> f(g(a)) }
-    
 }

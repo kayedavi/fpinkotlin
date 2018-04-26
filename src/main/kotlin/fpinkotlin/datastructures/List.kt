@@ -77,7 +77,7 @@ sealed class List<out A> { // `List` data type, parameterized on a type, `A`
 
         /*
         Somewhat overkill, but to illustrate the feature we're using a _pattern guard_, to only match a `Cons` whose head
-        satisfies our predicate, `f`. The syntax is to add `if <cond>` after the pattern, before the `=>`, where `<cond>` can
+        satisfies our predicate, `f`. The syntax is to add `if <cond>` after the pattern, before the `->`, where `<cond>` can
         use any of the variables introduced by the pattern.
         */
         fun <A> dropWhile(l: List<A>, f: (A) -> Boolean): List<A> =
@@ -127,10 +127,10 @@ sealed class List<out A> { // `List` data type, parameterized on a type, `A`
         is it replaces the `Nil` constructor of the list with the `z` argument, and it replaces the `Cons` constructor with
         the given function, `f`. If we just supply `Nil` for `z` and `Cons` for `f`, then we get back the input list.
 
-        foldRight(Cons(1, Cons(2, Cons(3, Nil))), Nil:List[Int])(Cons(_,_))
-        Cons(1, foldRight(Cons(2, Cons(3, Nil)), Nil:List[Int])(Cons(_,_)))
-        Cons(1, Cons(2, foldRight(Cons(3, Nil), Nil:List[Int])(Cons(_,_))))
-        Cons(1, Cons(2, Cons(3, foldRight(Nil, Nil:List[Int])(Cons(_,_)))))
+        foldRight(Cons(1, Cons(2, Cons(3, Nil))), Nil:List<Int>) { h, t -> Cons(h, t) }
+        Cons(1, foldRight(Cons(2, Cons(3, Nil)), Nil:List<Int>) { h, t -> Cons(h, t) })
+        Cons(1, Cons(2, foldRight(Cons(3, Nil), Nil:List<Int>) { h, t -> Cons(h, t) }))
+        Cons(1, Cons(2, Cons(3, foldRight(Nil, Nil:List<Int>) { h, t -> Cons(h, t) })))
         Cons(1, Cons(2, Cons(3, Nil)))
         */
 
@@ -161,9 +161,9 @@ sealed class List<out A> { // `List` data type, parameterized on a type, `A`
         when we discuss laziness).
 
         The other implementations build up a chain of functions which, when called, results in the operations being performed
-        with the correct associativity. We are calling `foldRight` with the `B` type being instantiated to `B => B`, then
+        with the correct associativity. We are calling `foldRight` with the `B` type being instantiated to `(B) -> B`, then
         calling the built up function with the `z` argument. Try expanding the definitions by substituting equals for equals
-        using a simple example, like `foldLeft(List(1,2,3), 0){ x, y -> x + y }` if this isn't clear. Note these implementations are
+        using a simple example, like `foldLeft(List(1,2,3), 0) { x, y -> x + y }` if this isn't clear. Note these implementations are
         more of theoretical interest - they aren't stack-safe and won't work for large lists.
         */
         fun <A, B> foldRightViaFoldLeft(l: List<A>, z: B, f: (A, B) -> B): B =
@@ -187,12 +187,12 @@ sealed class List<out A> { // `List` data type, parameterized on a type, `A`
         right-associativity of `foldRight`, this function is linear in the total length of all lists. You may want to try
         tracing the execution of the implementation on paper to convince yourself that this works.
 
-        Note that we're simply referencing the `append` function, without writing something like `(x,y) => append(x,y)`
-        or `append(_,_)`. In Scala there is a rather arbitrary distinction between functions defined as _methods_, which are
-        introduced with the `def` keyword, and function values, which are the first-class objects we can pass to other
-        functions, put in collections, and so on. This is a case where Scala lets us pretend the distinction doesn't exist.
-        In other cases, you'll be forced to write `append _` (to convert a `def` to a function value)
-        or even `(x: List[A], y: List[A]) => append(x,y)` if the function is polymorphic and the type arguments aren't known.
+        Note that we're simply referencing the `append` function, without writing something like `{ x, y -> append(x, y) }`
+        or `append(_,_)`. In Kotlin there is a rather arbitrary distinction between functions defined as _methods_, which are
+        introduced with the `fun` keyword, and function values, which are the first-class objects we can pass to other
+        functions, put in collections, and so on. This is a case where Kotlin lets us pretend the distinction doesn't exist.
+        In other cases, you'll be forced to write `::append` (to convert a `fun` to a function value)
+        or even `{ x: List<A>, y: List<A> -> append(x, y) }` if the function is polymorphic and the type arguments aren't known.
         */
         fun <A> concat(l: List<List<A>>): List<A> =
                 foldRight(l, Nil as List<A>, ::append)
@@ -263,9 +263,9 @@ sealed class List<out A> { // `List` data type, parameterized on a type, `A`
 
         /*
         To match on multiple values, we can put the values into a pair and match on the pair, as shown next, and the same
-        syntax extends to matching on N values (see sidebar "Pairs and tuples in Scala" for more about pair and tuple
+        syntax extends to matching on N values (see sidebar "Pairs and tuples in Kotlin" for more about pair and tuple
         objects). You can also (somewhat less conveniently, but a bit more efficiently) nest pattern matches: on the
-        right hand side of the `=>`, simply begin another `match` expression. The inner `match` will have access to all the
+        right hand side of the `->`, simply begin another `match` expression. The inner `match` will have access to all the
         variables introduced in the outer `match`.
 
         The discussion about stack usage from the explanation of `map` also applies here.
@@ -276,7 +276,7 @@ sealed class List<out A> { // `List` data type, parameterized on a type, `A`
 
         /*
         This function is usually called `zipWith`. The discussion about stack usage from the explanation of `map` also
-        applies here. By putting the `f` in the second argument list, Scala can infer its type from the previous argument list.
+        applies here. By putting the `f` in the second argument list, Kotlin can infer its type from the previous argument list.
         */
         fun <A, B, C> zipWith(a: List<A>, b: List<B>, f: (A, B) -> C): List<C> =
                 if (a is Cons && b is Cons) Cons(f(a.head, b.head), zipWith(a.tail, b.tail, f))
@@ -320,7 +320,7 @@ sealed class List<out A> { // `List` data type, parameterized on a type, `A`
 }
 
 object Nil : List<Nothing>() // A `List` constructor representing the empty list
-/* Another data constructor, representing nonempty lists. Note that `tail` is another `List[A]`,
+/* Another data constructor, representing nonempty lists. Note that `tail` is another `List<A>`,
 which may be `Nil` or another `Cons`.
  */
 data class Cons<out A>(val head: A, val tail: List<A>) : List<A>()
