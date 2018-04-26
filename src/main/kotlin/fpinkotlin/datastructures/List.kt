@@ -105,8 +105,12 @@ sealed class List<out A> { // `List` data type, parameterized on a type, `A`
             tailrec
             fun go(cur: List<A>): List<A> = when (cur) {
                 Nil -> error("init of empty list")
-                is Cons -> if (cur.tail === Nil) List(*buf.toArray()) as List<A> else {
-                    buf += cur.head; go(cur.tail)
+                is Cons -> if (cur.tail === Nil) {
+                    @Suppress("UNCHECKED_CAST")
+                    List(*buf.toArray()) as List<A>
+                } else {
+                    buf += cur.head
+                    go(cur.tail)
                 }
             }
             return go(l)
@@ -166,7 +170,152 @@ sealed class List<out A> { // `List` data type, parameterized on a type, `A`
                 foldLeft(reverse(l), z) { b, a -> f(a, b) }
 
         fun <A, B> foldRightViaFoldLeft_1(l: List<A>, z: B, f: (A, B) -> B): B =
-            foldLeft(l, { b: B -> b }, { g, a -> { b -> g(f(a, b)) } })(z)
+                foldLeft(l, { b: B -> b }, { g, a -> { b -> g(f(a, b)) } })(z)
+
+        fun <A, B> foldLeftViaFoldRight(l: List<A>, z: B, f: (B, A) -> B): B =
+                foldRight(l, { b: B -> b }, { a, g -> { b -> g(f(b, a)) } })(z)
+
+        /*
+        `append` simply replaces the `Nil` constructor of the first list with the second list, which is exactly the operation
+        performed by `foldRight`.
+        */
+        fun <A> appendViaFoldRight(l: List<A>, r: List<A>): List<A> =
+                foldRight(l, r) { h, t -> Cons(h, t) }
+
+        /*
+        Since `append` takes time proportional to its first argument, and this first argument never grows because of the
+        right-associativity of `foldRight`, this function is linear in the total length of all lists. You may want to try
+        tracing the execution of the implementation on paper to convince yourself that this works.
+
+        Note that we're simply referencing the `append` function, without writing something like `(x,y) => append(x,y)`
+        or `append(_,_)`. In Scala there is a rather arbitrary distinction between functions defined as _methods_, which are
+        introduced with the `def` keyword, and function values, which are the first-class objects we can pass to other
+        functions, put in collections, and so on. This is a case where Scala lets us pretend the distinction doesn't exist.
+        In other cases, you'll be forced to write `append _` (to convert a `def` to a function value)
+        or even `(x: List[A], y: List[A]) => append(x,y)` if the function is polymorphic and the type arguments aren't known.
+        */
+        fun <A> concat(l: List<List<A>>): List<A> =
+                foldRight(l, Nil as List<A>, ::append)
+
+        fun add1(l: List<Int>): List<Int> =
+                foldRight(l, Nil as List<Int>) { h, t -> Cons(h + 1, t) }
+
+        fun doubleToString(l: List<Double>): List<String> =
+                foldRight(l, Nil as List<String>) { h, t -> Cons(h.toString(), t) }
+
+        /*
+        A natural solution is using `foldRight`, but our implementation of `foldRight` is not stack-safe. We can
+        use `foldRightViaFoldLeft` to avoid the stack overflow (variation 1), but more commonly, with our current
+        implementation of `List`, `map` will just be implemented using local mutation (variation 2). Again, note that the
+        mutation isn't observable outside the function, since we're only mutating a buffer that we've allocated.
+        */
+        fun <A, B> map(l: List<A>, f: (A) -> B): List<B> =
+                foldRight(l, Nil as List<B>) { h, t -> Cons(f(h), t) }
+
+        fun <A, B> map_1(l: List<A>, f: (A) -> B): List<B> =
+                foldRightViaFoldLeft(l, Nil as List<B>) { h, t -> Cons(f(h), t) }
+
+        fun <A, B> map_2(l: List<A>, f: (A) -> B): List<B> {
+            val buf = ArrayList<B>()
+            fun go(l: List<A>): Unit = when (l) {
+                Nil -> Unit
+                is Cons -> {
+                    buf += f(l.head)
+                    go(l.tail)
+                }
+            }
+            go(l)
+            @Suppress("UNCHECKED_CAST")
+            return List(*buf.toArray()) as List<B> // converting from the standard Scala list to the list we've defined here
+        }
+
+        /*
+        The discussion about `map` also applies here.
+        */
+        fun <A> filter(l: List<A>, f: (A) -> Boolean): List<A> =
+                foldRight(l, Nil as List<A>) { h, t -> if (f(h)) Cons(h, t) else t }
+
+        fun <A> filter_1(l: List<A>, f: (A) -> Boolean): List<A> =
+                foldRightViaFoldLeft(l, Nil as List<A>) { h, t -> if (f(h)) Cons(h, t) else t }
+
+        fun <A> filter_2(l: List<A>, f: (A) -> Boolean): List<A> {
+            val buf = ArrayList<A>()
+            fun go(l: List<A>): Unit = when (l) {
+                Nil -> Unit
+                is Cons -> {
+                    if (f(l.head)) buf += l.head
+                    go(l.tail)
+                }
+            }
+            go(l)
+            @Suppress("UNCHECKED_CAST")
+            return List(*buf.toArray()) as List<A> // converting from the standard Scala list to the list we've defined here
+        }
+
+        /*
+        This could also be implemented directly using `foldRight`.
+        */
+        fun <A, B> flatMap(l: List<A>, f: (A) -> List<B>): List<B> =
+                concat(map(l, f))
+
+        fun <A> filterViaFlatMap(l: List<A>, f: (A) -> Boolean): List<A> =
+                flatMap(l) { a -> if (f(a)) List(a) else Nil }
+
+        /*
+        To match on multiple values, we can put the values into a pair and match on the pair, as shown next, and the same
+        syntax extends to matching on N values (see sidebar "Pairs and tuples in Scala" for more about pair and tuple
+        objects). You can also (somewhat less conveniently, but a bit more efficiently) nest pattern matches: on the
+        right hand side of the `=>`, simply begin another `match` expression. The inner `match` will have access to all the
+        variables introduced in the outer `match`.
+
+        The discussion about stack usage from the explanation of `map` also applies here.
+        */
+        fun addPairwise(a: List<Int>, b: List<Int>): List<Int> =
+                if (a is Cons && b is Cons) Cons(a.head + b.head, addPairwise(a.tail, b.tail))
+                else Nil
+
+        /*
+        This function is usually called `zipWith`. The discussion about stack usage from the explanation of `map` also
+        applies here. By putting the `f` in the second argument list, Scala can infer its type from the previous argument list.
+        */
+        fun <A, B, C> zipWith(a: List<A>, b: List<B>, f: (A, B) -> C): List<C> =
+                if (a is Cons && b is Cons) Cons(f(a.head, b.head), zipWith(a.tail, b.tail, f))
+                else Nil
+
+        /*
+        There's nothing particularly bad about this implementation,
+        except that it's somewhat monolithic and easy to get wrong.
+        Where possible, we prefer to assemble functions like this using
+        combinations of other functions. It makes the code more obviously
+        correct and easier to read and understand. Notice that in this
+        implementation we need special purpose logic to break out of our
+        loops early. In Chapter 5 we'll discuss ways of composing functions
+        like this from simpler components, without giving up the efficiency
+        of having the resulting functions work in one pass over the data.
+
+        It's good to specify some properties about these functions.
+        For example, do you expect these expressions to be true?
+
+        (xs append ys) startsWith xs
+        xs startsWith Nil
+        (xs append ys append zs) hasSubsequence ys
+        xs hasSubsequence Nil
+
+        */
+        tailrec
+        fun <A> startsWith(l: List<A>, prefix: List<A>): Boolean =
+                if (prefix === Nil) true
+                else if (l is Cons && prefix is Cons && l.head == prefix.head) startsWith(l.tail, prefix.tail)
+                else false
+
+        tailrec
+        fun <A> hasSubsequence(sup: List<A>, sub: List<A>): Boolean = when (sup) {
+            Nil -> sub == Nil
+            is Cons -> {
+                if (startsWith(sup, sub)) true
+                else hasSubsequence(sup.tail, sub)
+            }
+        }
     }
 }
 
