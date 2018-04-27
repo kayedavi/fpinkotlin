@@ -120,6 +120,56 @@ sealed class Stream<out A> {
                 else None
             }
 
+    fun takeWhileViaUnfold(f: (A) -> Boolean): Stream<A> =
+            unfold(this) {
+                if (it is Cons && f(it.h())) Some(it.h() to it.t())
+                else None
+            }
+
+    fun <B, C> zipWith(s2: Stream<B>, f: (A, B) -> C): Stream<C> =
+            unfold(this to s2) {
+                val s1 = it.first
+                val s2 = it.second
+                if (s1 is Cons && s2 is Cons) Some(f(s1.h(), s2.h()) to (s1.t() to s2.t()))
+                else None
+            }
+
+    // special case of `zipWith`
+    fun <B> zip(s2: Stream<B>): Stream<Pair<A, B>> =
+            zipWith(s2) { x, y -> x to y }
+
+    fun <B> zipAll(s2: Stream<B>): Stream<Pair<Option<A>, Option<B>>> =
+            zipWithAll(s2) { p -> p.first to p.second }
+
+    fun <B, C> zipWithAll(s2: Stream<B>, f: (Pair<Option<A>, Option<B>>) -> C): Stream<C> =
+            Stream.unfold(this to s2) {
+                val s1 = it.first
+                val s2 = it.second
+                if (s1 is Cons && s2 === Empty) Some(f(Some(s1.h()) to Option.empty()) to (s1.t() to empty()))
+                else if (s1 === Empty && s2 is Cons) Some(f(Option.empty<A>() to Some(s2.h())) to (empty<A>() to s2.t()))
+                else if (s1 is Cons && s2 is Cons) Some(f(Some(s1.h()) to Some(s2.h())) to (s1.t() to s2.t()))
+                else None
+            }
+
+    /*
+    `s startsWith s2` when corresponding elements of `s` and `s2` are all equal, until the point that `s2` is exhausted. If `s` is exhausted first, or we find an element that doesn't match, we terminate early. Using non-strictness, we can compose these three separate logical steps--the zipping, the termination when the second stream is exhausted, and the termination if a nonmatching element is found or the first stream is exhausted.
+    */
+    fun <A> startsWith(s: Stream<A>): Boolean =
+            zipAll(s).takeWhile { !it.second.isEmpty() }.forAll {
+                it.first == it.second
+            }
+
+    /*
+    The last element of `tails` is always the empty `Stream`, so we handle this as a special case, by appending it to the output.
+    */
+    fun tails(): Stream<Stream<A>> =
+            unfold(this) {
+                when (it) {
+                    Empty -> None
+                    is Cons -> Some(it to it.drop(1))
+                }
+            }.append { Stream(empty<A>()) }
+
     companion object {
         fun <A> cons(hd: () -> A, tl: () -> Stream<A>): Stream<A> {
             val head by lazy { hd() }
@@ -129,7 +179,7 @@ sealed class Stream<out A> {
 
         fun <A> empty(): Stream<A> = Empty
 
-        fun <A> invoke(vararg xs: A): Stream<A> =
+        operator fun <A> invoke(vararg xs: A): Stream<A> =
                 if (xs.isEmpty()) empty()
                 else cons(xs::first, { invoke(*xs.sliceArray(1..xs.lastIndex)) })
 

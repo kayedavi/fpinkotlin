@@ -310,7 +310,7 @@ sealed class List<out A> { // `List` data type, parameterized on a type, `A`
 
         tailrec
         fun <A> hasSubsequence(sup: List<A>, sub: List<A>): Boolean = when (sup) {
-            Nil -> sub == Nil
+            Nil -> sub === Nil
             is Cons -> {
                 if (startsWith(sup, sub)) true
                 else hasSubsequence(sup.tail, sub)
