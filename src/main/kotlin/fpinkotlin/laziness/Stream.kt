@@ -174,15 +174,15 @@ sealed class Stream<out A> {
             tails().exists { it.startsWith(s) }
 
     /*
-  The function can't be implemented using `unfold`, since `unfold` generates elements of the `Stream` from left to right. It can be implemented using `foldRight` though.
+    The function can't be implemented using `unfold`, since `unfold` generates elements of the `Stream` from left to right. It can be implemented using `foldRight` though.
 
-  The implementation is just a `foldRight` that keeps the accumulated value and the stream of intermediate results, which we `cons` onto during each iteration. When writing folds, it's common to have more state in the fold than is needed to compute the result. Here, we simply extract the accumulated list once finished.
-  */
+    The implementation is just a `foldRight` that keeps the accumulated value and the stream of intermediate results, which we `cons` onto during each iteration. When writing folds, it's common to have more state in the fold than is needed to compute the result. Here, we simply extract the accumulated list once finished.
+    */
     fun <B> scanRight(z: B, f: (A, () -> B) -> B): Stream<B> {
-        return foldRight({ z to Stream(z) }, { a, pair ->
-            val p1 by lazy { pair() }
-            val b2 = f(a, { p1.first })
-            b2 to cons({ b2 }, { p1.second })
+        return foldRight({ z to Stream(z) }, { a, p0 ->
+            val p1 by lazy { p0() }
+            val b2 = f(a, p1::first)
+            b2 to cons({ b2 }, p1::second)
         }).second
     }
 
@@ -227,6 +227,12 @@ sealed class Stream<out A> {
 
         fun <A, S> unfoldViaMap(z: S, f: (S) -> Option<Pair<A, S>>): Stream<A> =
                 f(z).map { p: Pair<A, S> -> cons(p::first, { unfold(p.second, f) }) }.getOrElse(::empty)
+
+        tailrec
+        fun <A> Stream<A>.find(f: (A) -> Boolean): Option<A> = when (this) {
+            is Empty -> None
+            is Cons -> if (f(h())) Some(h()) else t().find(f)
+        }
     }
 }
 
