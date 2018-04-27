@@ -170,6 +170,22 @@ sealed class Stream<out A> {
                 }
             }.append { Stream(empty<A>()) }
 
+    fun <A> hasSubsequence(s: Stream<A>): Boolean =
+            tails().exists { it.startsWith(s) }
+
+    /*
+  The function can't be implemented using `unfold`, since `unfold` generates elements of the `Stream` from left to right. It can be implemented using `foldRight` though.
+
+  The implementation is just a `foldRight` that keeps the accumulated value and the stream of intermediate results, which we `cons` onto during each iteration. When writing folds, it's common to have more state in the fold than is needed to compute the result. Here, we simply extract the accumulated list once finished.
+  */
+    fun <B> scanRight(z: B, f: (A, () -> B) -> B): Stream<B> {
+        return foldRight({ z to Stream(z) }, { a, pair ->
+            val p1 by lazy { pair() }
+            val b2 = f(a, { p1.first })
+            b2 to cons({ b2 }, { p1.second })
+        }).second
+    }
+
     companion object {
         fun <A> cons(hd: () -> A, tl: () -> Stream<A>): Stream<A> {
             val head by lazy { hd() }
