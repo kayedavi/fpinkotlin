@@ -139,7 +139,7 @@ sealed class Stream<out A> {
             zipWith(s2) { x, y -> x to y }
 
     fun <B> zipAll(s2: Stream<B>): Stream<Pair<Option<A>, Option<B>>> =
-            zipWithAll(s2) { p -> p.first to p.second }
+            zipWithAll(s2) { it.first to it.second }
 
     fun <B, C> zipWithAll(s2: Stream<B>, f: (Pair<Option<A>, Option<B>>) -> C): Stream<C> =
             Stream.unfold(this to s2) {
