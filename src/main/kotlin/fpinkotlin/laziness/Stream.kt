@@ -180,7 +180,7 @@ sealed class Stream<out A> {
     */
     fun <B> scanRight(z: B, f: (A, () -> B) -> B): Stream<B> {
         return foldRight({ z to Stream(z) }, { a, p0 ->
-            val p1 by lazy { p0() }
+            val p1 by lazy(p0)
             val b2 = f(a, p1::first)
             b2 to cons({ b2 }, p1::second)
         }).second
@@ -188,8 +188,8 @@ sealed class Stream<out A> {
 
     companion object {
         fun <A> cons(hd: () -> A, tl: () -> Stream<A>): Stream<A> {
-            val head by lazy { hd() }
-            val tail by lazy { tl() }
+            val head by lazy(hd)
+            val tail by lazy(tl)
             return Cons({ head }, { tail })
         }
 
