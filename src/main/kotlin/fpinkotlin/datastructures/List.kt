@@ -271,16 +271,20 @@ sealed class List<out A> { // `List` data type, parameterized on a type, `A`
         The discussion about stack usage from the explanation of `map` also applies here.
         */
         fun addPairwise(a: List<Int>, b: List<Int>): List<Int> =
-                if (a is Cons && b is Cons) Cons(a.head + b.head, addPairwise(a.tail, b.tail))
-                else Nil
+                when {
+                    a is Cons && b is Cons -> Cons(a.head + b.head, addPairwise(a.tail, b.tail))
+                    else -> Nil
+                }
 
         /*
         This function is usually called `zipWith`. The discussion about stack usage from the explanation of `map` also
         applies here. By putting the `f` in the second argument list, Kotlin can infer its type from the previous argument list.
         */
         fun <A, B, C> zipWith(a: List<A>, b: List<B>, f: (A, B) -> C): List<C> =
-                if (a is Cons && b is Cons) Cons(f(a.head, b.head), zipWith(a.tail, b.tail, f))
-                else Nil
+                when {
+                    a is Cons && b is Cons -> Cons(f(a.head, b.head), zipWith(a.tail, b.tail, f))
+                    else -> Nil
+                }
 
         /*
         There's nothing particularly bad about this implementation,
@@ -304,9 +308,11 @@ sealed class List<out A> { // `List` data type, parameterized on a type, `A`
         */
         tailrec
         fun <A> startsWith(l: List<A>, prefix: List<A>): Boolean =
-                if (prefix === Nil) true
-                else if (l is Cons && prefix is Cons && l.head == prefix.head) startsWith(l.tail, prefix.tail)
-                else false
+                when {
+                    prefix === Nil -> true
+                    l is Cons && prefix is Cons && l.head == prefix.head -> startsWith(l.tail, prefix.tail)
+                    else -> false
+                }
 
         tailrec
         fun <A> hasSubsequence(sup: List<A>, sub: List<A>): Boolean = when (sup) {
