@@ -44,11 +44,13 @@ sealed class Either<out E, out A> {
                 }
 
         fun <E, A, B> traverse(es: List<A>, f: (A) -> Either<E, B>): Either<E, List<B>> =
-                if (es.isEmpty()) Right(emptyList())
-                else {
-                    val h = es.first()
-                    val t = es.drop(1)
-                    f(h).map2(traverse(t, f)) { hh, tt -> listOf(hh) + tt }
+                when {
+                    es.isEmpty() -> Right(emptyList())
+                    else -> {
+                        val h = es.first()
+                        val t = es.drop(1)
+                        f(h).map2(traverse(t, f)) { hh, tt -> listOf(hh) + tt }
+                    }
                 }
 
         fun <E, A, B> traverse_1(es: List<A>, f: (A) -> Either<E, B>): Either<E, List<B>> =

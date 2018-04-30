@@ -55,16 +55,20 @@ sealed class Stream<out A> {
       at the stream at all.
     */
     fun take(n: Int): Stream<A> =
-            if (this is Cons && n > 1) cons(h, { t().take(n - 1) })
-            else if (this is Cons && n == 1) cons(h, ::empty)
-            else empty()
+            when {
+                this is Cons && n > 1 -> cons(h, { t().take(n - 1) })
+                this is Cons && n == 1 -> cons(h, ::empty)
+                else -> empty()
+            }
 
     /*
     It's a common Scala style to write method calls without `.` notation, as in `t() takeWhile f`.
     */
     fun takeWhile(f: (A) -> Boolean): Stream<A> =
-            if (this is Cons && f(h())) cons(h, { t().takeWhile(f) })
-            else empty()
+            when {
+                this is Cons && f(h()) -> cons(h, { t().takeWhile(f) })
+                else -> empty()
+            }
 
     fun <B> foldRight(z: () -> B, f: (A, () -> B) -> B): B = // The arrow `=>` in front of the argument type `B` means that the function `f` takes its second argument by name and may choose not to evaluate it.
             when (this) {
@@ -115,23 +119,29 @@ sealed class Stream<out A> {
                 val s = it.first
                 val nn = it.second
 
-                if (s is Cons && nn == 1) Some(s.h() to (s.t() to n - 1))
-                else if (s is Cons && nn > 1) Some(s.h() to (s.t() to n - 1))
-                else None
+                when {
+                    s is Cons && nn == 1 -> Some(s.h() to (s.t() to n - 1))
+                    s is Cons && nn > 1 -> Some(s.h() to (s.t() to n - 1))
+                    else -> None
+                }
             }
 
     fun takeWhileViaUnfold(f: (A) -> Boolean): Stream<A> =
             unfold(this) {
-                if (it is Cons && f(it.h())) Some(it.h() to it.t())
-                else None
+                when {
+                    it is Cons && f(it.h()) -> Some(it.h() to it.t())
+                    else -> None
+                }
             }
 
     fun <B, C> zipWith(s2: Stream<B>, f: (A, B) -> C): Stream<C> =
             unfold(this to s2) {
                 val s1 = it.first
                 val s2 = it.second
-                if (s1 is Cons && s2 is Cons) Some(f(s1.h(), s2.h()) to (s1.t() to s2.t()))
-                else None
+                when {
+                    s1 is Cons && s2 is Cons -> Some(f(s1.h(), s2.h()) to (s1.t() to s2.t()))
+                    else -> None
+                }
             }
 
     // special case of `zipWith`
@@ -145,10 +155,12 @@ sealed class Stream<out A> {
             Stream.unfold(this to s2) {
                 val s1 = it.first
                 val s2 = it.second
-                if (s1 is Cons && s2 === Empty) Some(f(Some(s1.h()) to Option.empty()) to (s1.t() to empty()))
-                else if (s1 === Empty && s2 is Cons) Some(f(Option.empty<A>() to Some(s2.h())) to (empty<A>() to s2.t()))
-                else if (s1 is Cons && s2 is Cons) Some(f(Some(s1.h()) to Some(s2.h())) to (s1.t() to s2.t()))
-                else None
+                when {
+                    s1 is Cons && s2 === Empty -> Some(f(Some(s1.h()) to Option.empty()) to (s1.t() to empty()))
+                    s1 === Empty && s2 is Cons -> Some(f(Option.empty<A>() to Some(s2.h())) to (empty<A>() to s2.t()))
+                    s1 is Cons && s2 is Cons -> Some(f(Some(s1.h()) to Some(s2.h())) to (s1.t() to s2.t()))
+                    else -> None
+                }
             }
 
     /*
@@ -223,8 +235,10 @@ sealed class Stream<out A> {
         */
         tailrec
         fun <A> Stream<A>.drop(n: Int): Stream<A> =
-                if (this is Cons && n > 0) t().drop(n - 1)
-                else this
+                when {
+                    this is Cons && n > 0 -> t().drop(n - 1)
+                    else -> this
+                }
 
         fun <A> Stream<A>.append(s: () -> Stream<A>): Stream<A> =
                 foldRight(s) { h, t -> cons({ h }, t) }

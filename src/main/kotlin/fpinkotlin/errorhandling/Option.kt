@@ -36,8 +36,10 @@ sealed class Option<out A> {
     }
 
     fun filter(f: (A) -> Boolean): Option<A> =
-            if (this is Some && f(get)) this
-            else None
+            when {
+                this is Some && f(get) -> this
+                else -> None
+            }
 
     /*
     This can also be defined in terms of `flatMap`.
@@ -86,11 +88,13 @@ sealed class Option<out A> {
         Here's an explicit recursive version:
         */
         fun <A> sequence(a: List<Option<A>>): Option<List<A>> =
-                if (a.isEmpty()) Some(emptyList())
-                else {
-                    val h = a.first()
-                    val t = a.drop(1)
-                    h.flatMap { hh -> sequence(t).map { listOf(hh) + it } }
+                when {
+                    a.isEmpty() -> Some(emptyList())
+                    else -> {
+                        val h = a.first()
+                        val t = a.drop(1)
+                        h.flatMap { hh -> sequence(t).map { listOf(hh) + it } }
+                    }
                 }
 
         /*
@@ -102,11 +106,13 @@ sealed class Option<out A> {
                 a.foldRight(Some(emptyList())) { x, y -> map2(x, y) { h, t -> listOf(h) + t } }
 
         fun <A, B> traverse(a: List<A>, f: (A) -> Option<B>): Option<List<B>> =
-                if (a.isEmpty()) Some(emptyList())
-                else {
-                    val h = a.first()
-                    val t = a.drop(1)
-                    map2(f(h), traverse(t, f)) { h, t -> listOf(h) + t }
+                when {
+                    a.isEmpty() -> Some(emptyList())
+                    else -> {
+                        val h = a.first()
+                        val t = a.drop(1)
+                        map2(f(h), traverse(t, f)) { h, t -> listOf(h) + t }
+                    }
                 }
 
         fun <A, B> traverse_1(a: List<A>, f: (A) -> Option<B>): Option<List<B>> =
