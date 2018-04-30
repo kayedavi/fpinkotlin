@@ -199,6 +199,24 @@ sealed class Stream<out A> {
                 if (xs.isEmpty()) empty()
                 else cons(xs::first, { invoke(*xs.sliceArray(1..xs.lastIndex)) })
 
+        fun ones(): Stream<Int> = Stream.cons({ 1 }, ::ones)
+
+        // This is more efficient than `cons(a, constant(a))` since it's just
+        // one object referencing itself.
+//        fun <A> constant(a: A): Stream<A> {
+//            val tail: Stream<A> by lazy { Cons({ a }, { tail }) }
+//            return tail
+//        }
+
+        fun from(n: Int): Stream<Int> =
+                cons({ n }) { from(n + 1) }
+
+        val fibs = {
+            fun go(f0: Int, f1: Int): Stream<Int> =
+                    cons({ f0 }, { go(f1, f0 + f1) })
+            go(0, 1)
+        }
+
         /*
           Create a new Stream[A] from this, but ignore the n first elements. This can be achieved by recursively calling
           drop on the invoked tail of a cons cell. Note that the implementation is also tail recursive.
