@@ -203,10 +203,10 @@ sealed class Stream<out A> {
 
         // This is more efficient than `cons(a, constant(a))` since it's just
         // one object referencing itself.
-//        fun <A> constant(a: A): Stream<A> {
-//            val tail: Stream<A> by lazy { Cons({ a }, { tail }) }
-//            return tail
-//        }
+        fun <A> constant(a: A): Stream<A> {
+            val tail: Stream<A> by lazy { Cons({ a }, { constant(a) }) }
+            return tail
+        }
 
         fun from(n: Int): Stream<Int> =
                 cons({ n }) { from(n + 1) }
