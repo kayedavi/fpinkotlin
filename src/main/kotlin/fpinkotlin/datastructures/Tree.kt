@@ -43,13 +43,13 @@ sealed class Tree<out A> {
         }
 
         fun <A> sizeViaFold(t: Tree<A>): Int =
-                fold(t, { a -> 1 }, { x, y -> 1 + x + y })
+                fold(t, { a -> 1 }) { x, y -> 1 + x + y }
 
         fun maximumViaFold(t: Tree<Int>): Int =
-                fold(t, { a -> a }, { x, y -> maxOf(x, y) })
+                fold(t, { a -> a }) { x, y -> maxOf(x, y) }
 
         fun <A> depthViaFold(t: Tree<A>): Int =
-                fold(t, { a -> 0 }, { d1, d2 -> 1 + maxOf(d1, d2) })
+                fold(t, { a -> 0 }) { d1, d2 -> 1 + maxOf(d1, d2) }
 
         /*
         Note the type annotation required on the expression `Leaf(f(a))`. Without this annotation, we get an error like this:
@@ -57,7 +57,7 @@ sealed class Tree<out A> {
         type mismatch;
           found   : fpinkotlin.datastructures.Branch<B>
           required: fpinkotlin.datastructures.Leaf<B>
-             fold(t, { a -> Leaf(f(a)) }, { l, r -> Branch(l, r) })
+             fold(t, { a -> Leaf(f(a)) }) { l, r -> Branch(l, r) }
                                       ^
 
         This error is an unfortunate consequence of Scala using subtyping to encode algebraic data types. Without the
@@ -71,7 +71,7 @@ sealed class Tree<out A> {
           fun <A> branch(l: Tree<A>, r: Tree<A>): Tree<A> = Branch(l, r)
         */
         fun <A, B> mapViaFold(t: Tree<A>, f: (A) -> B): Tree<B> =
-                fold(t, { a -> Leaf(f(a)) as Tree<B> }, { l, r -> Branch(l, r) })
+                fold(t, { a -> Leaf(f(a)) as Tree<B> }) { l, r -> Branch(l, r) }
     }
 }
 

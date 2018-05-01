@@ -56,7 +56,7 @@ sealed class Stream<out A> {
     */
     fun take(n: Int): Stream<A> =
             when {
-                this is Cons && n > 1 -> cons(h, { t().take(n - 1) })
+                this is Cons && n > 1 -> cons(h) { t().take(n - 1) }
                 this is Cons && n == 1 -> cons(h, ::empty)
                 else -> empty()
             }
@@ -66,13 +66,13 @@ sealed class Stream<out A> {
     */
     fun takeWhile(f: (A) -> Boolean): Stream<A> =
             when {
-                this is Cons && f(h()) -> cons(h, { t().takeWhile(f) })
+                this is Cons && f(h()) -> cons(h) { t().takeWhile(f) }
                 else -> empty()
             }
 
     fun <B> foldRight(z: () -> B, f: (A, () -> B) -> B): B = // The arrow `=>` in front of the argument type `B` means that the function `f` takes its second argument by name and may choose not to evaluate it.
             when (this) {
-                is Cons -> f(h(), { t().foldRight(z, f) }) // If `f` doesn't evaluate its second argument, the recursion never occurs.
+                is Cons -> f(h()) { t().foldRight(z, f) } // If `f` doesn't evaluate its second argument, the recursion never occurs.
                 else -> z()
             }
 
@@ -188,32 +188,32 @@ sealed class Stream<out A> {
     The implementation is just a `foldRight` that keeps the accumulated value and the stream of intermediate results, which we `cons` onto during each iteration. When writing folds, it's common to have more state in the fold than is needed to compute the result. Here, we simply extract the accumulated list once finished.
     */
     fun <B> scanRight(z: B, f: (A, () -> B) -> B): Stream<B> {
-        return foldRight({ z to Stream(z) }, { a, p0 ->
+        return foldRight({ z to Stream(z) }) { a, p0 ->
             val p1 by lazy(p0)
             val b2 = f(a, p1::first)
             b2 to cons({ b2 }, p1::second)
-        }).second
+        }.second
     }
 
     companion object {
         fun <A> cons(hd: () -> A, tl: () -> Stream<A>): Stream<A> {
             val head by lazy(hd)
             val tail by lazy(tl)
-            return Cons({ head }, { tail })
+            return Cons({ head }) { tail }
         }
 
         fun <A> empty(): Stream<A> = Empty
 
         operator fun <A> invoke(vararg xs: A): Stream<A> =
                 if (xs.isEmpty()) empty()
-                else cons(xs::first, { invoke(*xs.sliceArray(1..xs.lastIndex)) })
+                else cons(xs::first) { invoke(*xs.sliceArray(1..xs.lastIndex)) }
 
         fun ones(): Stream<Int> = Stream.cons({ 1 }, ::ones)
 
         // This is more efficient than `cons(a, constant(a))` since it's just
         // one object referencing itself.
         fun <A> constant(a: A): Stream<A> {
-            val tail: Stream<A> by lazy { Cons({ a }, { constant(a) }) }
+            val tail: Stream<A> by lazy { Cons({ a }) { constant(a) } }
             return tail
         }
 
@@ -222,7 +222,7 @@ sealed class Stream<out A> {
 
         val fibs = {
             fun go(f0: Int, f1: Int): Stream<Int> =
-                    cons({ f0 }, { go(f1, f0 + f1) })
+                    cons({ f0 }) { go(f1, f0 + f1) }
             go(0, 1)
         }
 
@@ -243,7 +243,7 @@ sealed class Stream<out A> {
         fun <A, S> unfold(z: S, f: (S) -> Option<Pair<A, S>>): Stream<A> {
             val o = f(z)
             return when (o) {
-                is Some -> cons(o.t::first, { unfold(o.t.second, f) })
+                is Some -> cons(o.t::first) { unfold(o.t.second, f) }
                 None -> empty()
             }
         }
@@ -252,10 +252,10 @@ sealed class Stream<out A> {
         The below two implementations use `fold` and `map` functions in the Option class to implement unfold, thereby doing away with the need to manually pattern match as in the above solution.
         */
         fun <A, S> unfoldViaFold(z: S, f: (S) -> Option<Pair<A, S>>): Stream<A> =
-                f(z).fold(::empty) { p: Pair<A, S> -> cons(p::first, { unfold(p.second, f) }) }
+                f(z).fold(::empty) { p: Pair<A, S> -> cons(p::first) { unfold(p.second, f) } }
 
         fun <A, S> unfoldViaMap(z: S, f: (S) -> Option<Pair<A, S>>): Stream<A> =
-                f(z).map { p: Pair<A, S> -> cons(p::first, { unfold(p.second, f) }) }.getOrElse(::empty)
+                f(z).map { p: Pair<A, S> -> cons(p::first) { unfold(p.second, f) } }.getOrElse(::empty)
 
         tailrec
         fun <A> Stream<A>.find(f: (A) -> Boolean): Option<A> = when (this) {

@@ -174,10 +174,10 @@ sealed class List<out A> { // `List` data type, parameterized on a type, `A`
                 foldLeft(reverse(l), z) { b, a -> f(a, b) }
 
         fun <A, B> foldRightViaFoldLeft_1(l: List<A>, z: B, f: (A, B) -> B): B =
-                foldLeft(l, { b: B -> b }, { g, a -> { b -> g(f(a, b)) } })(z)
+                foldLeft(l, { b: B -> b }) { g, a -> { b -> g(f(a, b)) } }(z)
 
         fun <A, B> foldLeftViaFoldRight(l: List<A>, z: B, f: (B, A) -> B): B =
-                foldRight(l, { b: B -> b }, { a, g -> { b -> g(f(b, a)) } })(z)
+                foldRight(l, { b: B -> b }) { a, g -> { b -> g(f(b, a)) } }(z)
 
         /*
         `append` simply replaces the `Nil` constructor of the first list with the second list, which is exactly the operation
