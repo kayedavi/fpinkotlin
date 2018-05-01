@@ -116,8 +116,7 @@ sealed class Stream<out A> {
 
     fun takeViaUnfold(n: Int): Stream<A> =
             unfold(this to n) {
-                val s = it.first
-                val nn = it.second
+                val (s, nn) = it
 
                 when {
                     s is Cons && nn == 1 -> Some(s.h() to (s.t() to n - 1))
@@ -136,8 +135,7 @@ sealed class Stream<out A> {
 
     fun <B, C> zipWith(s2: Stream<B>, f: (A, B) -> C): Stream<C> =
             unfold(this to s2) {
-                val s1 = it.first
-                val s2 = it.second
+                val (s1, s2) = it
                 when {
                     s1 is Cons && s2 is Cons -> Some(f(s1.h(), s2.h()) to (s1.t() to s2.t()))
                     else -> None
@@ -153,8 +151,7 @@ sealed class Stream<out A> {
 
     fun <B, C> zipWithAll(s2: Stream<B>, f: (Pair<Option<A>, Option<B>>) -> C): Stream<C> =
             Stream.unfold(this to s2) {
-                val s1 = it.first
-                val s2 = it.second
+                val (s1, s2) = it
                 when {
                     s1 is Cons && s2 === Empty -> Some(f(Some(s1.h()) to Option.empty()) to (s1.t() to empty()))
                     s1 === Empty && s2 is Cons -> Some(f(Option.empty<A>() to Some(s2.h())) to (empty<A>() to s2.t()))

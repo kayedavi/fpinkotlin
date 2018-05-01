@@ -68,6 +68,7 @@ sealed class List<out A> { // `List` data type, parameterized on a type, `A`
         length of the input list is unknown, and the number of elements to be dropped is being computed from something else.
         If `drop` threw an exception, we'd have to first compute or check the length and only drop up to that many elements.
         */
+        tailrec
         fun <A> drop(l: List<A>, n: Int): List<A> =
                 if (n <= 0) l
                 else when (l) {
@@ -80,6 +81,7 @@ sealed class List<out A> { // `List` data type, parameterized on a type, `A`
         satisfies our predicate, `f`. The syntax is to add `if <cond>` after the pattern, before the `->`, where `<cond>` can
         use any of the variables introduced by the pattern.
         */
+        tailrec
         fun <A> dropWhile(l: List<A>, f: (A) -> Boolean): List<A> =
                 when {
                     l is Cons && f(l.head) -> dropWhile(l.tail, f)
@@ -129,10 +131,10 @@ sealed class List<out A> { // `List` data type, parameterized on a type, `A`
         is it replaces the `Nil` constructor of the list with the `z` argument, and it replaces the `Cons` constructor with
         the given function, `f`. If we just supply `Nil` for `z` and `Cons` for `f`, then we get back the input list.
 
-        foldRight(Cons(1, Cons(2, Cons(3, Nil))), Nil:List<Int>) { h, t -> Cons(h, t) }
-        Cons(1, foldRight(Cons(2, Cons(3, Nil)), Nil:List<Int>) { h, t -> Cons(h, t) })
-        Cons(1, Cons(2, foldRight(Cons(3, Nil), Nil:List<Int>) { h, t -> Cons(h, t) }))
-        Cons(1, Cons(2, Cons(3, foldRight(Nil, Nil:List<Int>) { h, t -> Cons(h, t) })))
+        foldRight(Cons(1, Cons(2, Cons(3, Nil))), Nil as List<Int>) { h, t -> Cons(h, t) }
+        Cons(1, foldRight(Cons(2, Cons(3, Nil)), Nil as List<Int>) { h, t -> Cons(h, t) })
+        Cons(1, Cons(2, foldRight(Cons(3, Nil), Nil as List<Int>) { h, t -> Cons(h, t) }))
+        Cons(1, Cons(2, Cons(3, foldRight(Nil, Nil as List<Int>) { h, t -> Cons(h, t) })))
         Cons(1, Cons(2, Cons(3, Nil)))
         */
 
