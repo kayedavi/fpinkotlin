@@ -81,8 +81,10 @@ sealed class List<out A> { // `List` data type, parameterized on a type, `A`
         use any of the variables introduced by the pattern.
         */
         fun <A> dropWhile(l: List<A>, f: (A) -> Boolean): List<A> =
-                if (l is Cons && f(l.head)) dropWhile(l.tail, f)
-                else l
+                when {
+                    l is Cons && f(l.head) -> dropWhile(l.tail, f)
+                    else -> l
+                }
 
         /*
         Note that we're copying the entire list up until the last element. Besides being inefficient, the natural recursive
