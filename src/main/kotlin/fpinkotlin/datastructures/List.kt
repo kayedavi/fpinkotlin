@@ -221,6 +221,7 @@ sealed class List<out A> { // `List` data type, parameterized on a type, `A`
 
         fun <A, B> map_2(l: List<A>, f: (A) -> B): List<B> {
             val buf = ArrayList<B>()
+            tailrec
             fun go(l: List<A>): Unit = when (l) {
                 Nil -> Unit
                 is Cons -> {
@@ -244,6 +245,7 @@ sealed class List<out A> { // `List` data type, parameterized on a type, `A`
 
         fun <A> filter_2(l: List<A>, f: (A) -> Boolean): List<A> {
             val buf = ArrayList<A>()
+            tailrec
             fun go(l: List<A>): Unit = when (l) {
                 Nil -> Unit
                 is Cons -> {
