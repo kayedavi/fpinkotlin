@@ -51,24 +51,24 @@ sealed class Option<out A> {
         fun failingFn(i: Int): Int {
             // `val y: Int = ...` declares `y` as having type `Int`, and sets it equal to the right hand side of the `=`.
             val y: Int = throw Exception("fail!")
-            try {
+            return try {
                 val x = 42 + 5
-                return x + y
+                x + y
             }
             // A `catch` block is just a pattern matching block like the ones we've seen. `case e: Exception` is a pattern
             // that matches any `Exception`, and it binds this value to the identifier `e`. The match returns the value 43.
             catch (e: Exception) {
-                return 43
+                43
             }
         }
 
         fun failingFn2(i: Int): Int {
-            try {
+            return try {
                 val x = 42 + 5
                 // A thrown Exception can be given any type; here we're annotating it with the type `Int`
-                return x + ((throw Exception("fail!")) as Int)
+                x + ((throw Exception("fail!")) as Int)
             } catch (e: Exception) {
-                return 43
+                43
             }
         }
 
