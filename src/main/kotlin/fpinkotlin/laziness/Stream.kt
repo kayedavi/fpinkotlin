@@ -241,9 +241,9 @@ sealed class Stream<out A> {
                 foldRight(s) { h, t -> cons({ h }, t) }
 
         fun <A, S> unfold(z: S, f: (S) -> Option<Pair<A, S>>): Stream<A> {
-            val o = f(z)
-            return when (o) {
-                is Some -> cons(o.t::first) { unfold(o.t.second, f) }
+            val p = f(z)
+            return when (p) {
+                is Some -> cons(p.t::first) { unfold(p.t.second, f) }
                 None -> empty()
             }
         }
