@@ -7,22 +7,22 @@ sealed class Either<out E, out A> {
                 is Left -> Left(get)
             }
 
+    fun orElse(b: () -> Either<@UnsafeVariance E, @UnsafeVariance A>): Either<E, A> =
+            when (this) {
+                is Left -> b()
+                is Right -> Right(get)
+            }
+
+    fun <B> flatMap(f: (A) -> Either<@UnsafeVariance E, @UnsafeVariance B>): Either<E, B> =
+            when (this) {
+                is Left -> Left(get)
+                is Right -> f(get)
+            }
+
+    fun <B, C> map2(b: Either<@UnsafeVariance E, B>, f: (A, B) -> C): Either<E, C> =
+            flatMap { a -> b.map { b1 -> f(a, b1) } }
+
     companion object {
-        fun <E, A> Either<E, A>.orElse(b: () -> Either<E, A>): Either<E, A> =
-                when (this) {
-                    is Left -> b()
-                    is Right -> Right(get)
-                }
-
-        fun <E, A, B> Either<E, A>.flatMap(f: (A) -> Either<E, B>): Either<E, B> =
-                when (this) {
-                    is Left -> Left(get)
-                    is Right -> f(get)
-                }
-
-        fun <E, A, B, C> Either<E, A>.map2(b: Either<E, B>, f: (A, B) -> C): Either<E, C> =
-                flatMap { a -> b.map { b1 -> f(a, b1) } }
-
         fun mean(xs: Iterable<Double>): Either<String, Double> =
                 if (xs.none())
                     Left("mean of empty list!")
