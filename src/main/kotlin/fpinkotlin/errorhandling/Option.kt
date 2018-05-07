@@ -8,6 +8,11 @@ sealed class Option<out A> {
         is Some -> Some(f(get))
     }
 
+    fun getOrElse(default: () -> @UnsafeVariance A): A = when (this) {
+        None -> default()
+        is Some -> get
+    }
+
     fun <B> flatMap(f: (A) -> Option<B>): Option<B> =
             map(f).getOrElse { None }
 
@@ -17,6 +22,17 @@ sealed class Option<out A> {
     fun <B> flatMap_1(f: (A) -> Option<B>): Option<B> = when (this) {
         None -> None
         is Some -> f(get)
+    }
+
+    fun orElse(ob: () -> Option<@UnsafeVariance A>): Option<A> =
+            map { this }.getOrElse(ob)
+
+    /*
+    Again, we can implement this with explicit pattern matching.
+    */
+    fun orElse_1(ob: () -> Option<@UnsafeVariance A>): Option<A> = when (this) {
+        None -> ob()
+        else -> this
     }
 
     fun filter(f: (A) -> Boolean): Option<A> =
@@ -109,19 +125,3 @@ sealed class Option<out A> {
 
 data class Some<out A>(val get: A) : Option<A>()
 object None : Option<Nothing>()
-
-fun <A> Option<A>.getOrElse(default: () -> A): A = when (this) {
-    None -> default()
-    is Some -> get
-}
-
-fun <A> Option<A>.orElse(ob: () -> Option<A>): Option<A> =
-        this.map { Some(it) }.getOrElse(ob)
-
-/*
-Again, we can implement this with explicit pattern matching.
-*/
-fun <A> Option<A>.orElse_1(ob: () -> Option<A>): Option<A> = when (this) {
-    None -> ob()
-    else -> this
-}
