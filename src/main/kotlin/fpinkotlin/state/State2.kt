@@ -47,7 +47,7 @@ object State2 {
     // In `sequence`, the base case of the fold is a `unit` action that returns
     // the empty list. At each step in the fold, we accumulate in `acc`
     // and `f` is the current element in the list.
-    // `map2(f, acc)(_ :: _)` results in a value of type `Rand[List[A]]`
+    // `map2(f, acc) { h, t -> listOf(h) + t }` results in a value of type `Rand<List<A>>`
     // We map over that to prepend (cons) the element onto the accumulated list.
     //
     // We are using `foldRight`. If we used `foldLeft` then the values in the
