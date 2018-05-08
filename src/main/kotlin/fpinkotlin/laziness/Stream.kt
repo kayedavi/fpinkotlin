@@ -62,6 +62,20 @@ sealed class Stream<out A> {
             }
 
     /*
+      Create a new Stream<A> from this, but ignore the n first elements. This can be achieved by recursively calling
+      drop on the invoked tail of a cons cell. Note that the implementation is also tail recursive.
+    */
+    fun drop(n: Int): Stream<A> {
+        tailrec
+        fun drop(s: Stream<A>, n: Int): Stream<A> =
+                when {
+                    s is Cons && n > 0 -> drop(s.t(), n - 1)
+                    else -> s
+                }
+        return drop(this, n)
+    }
+
+    /*
     It's a common Scala style to write method calls without `.` notation, as in `t() takeWhile f`.
     */
     fun takeWhile(f: (A) -> Boolean): Stream<A> =
@@ -102,6 +116,9 @@ sealed class Stream<out A> {
                 if (f(h)) cons({ h }, t)
                 else t()
             }
+
+    fun append(s: () -> Stream<@UnsafeVariance A>): Stream<A> =
+            foldRight(s) { h, t -> cons({ h }, t) }
 
     fun <B> flatMap(f: (A) -> Stream<B>): Stream<B> =
             foldRight(::empty) { h, t -> f(h).append(t) }
@@ -177,7 +194,7 @@ sealed class Stream<out A> {
                     Empty -> None
                     is Cons -> Some(it to it.drop(1))
                 }
-            }.append { Stream(empty<A>()) }
+            }.append { empty() }
 
     fun <A> hasSubsequence(s: Stream<A>): Boolean =
             tails().exists { it.startsWith(s) }
@@ -193,6 +210,16 @@ sealed class Stream<out A> {
             val b2 = f(a, p1::first)
             b2 to cons({ b2 }, p1::second)
         }.second
+    }
+
+    fun find(f: (A) -> Boolean): Option<A> {
+        tailrec
+        fun find(s: Stream<A>, f: (A) -> Boolean): Option<A> =
+                when (s) {
+                    is Empty -> None
+                    is Cons -> if (f(s.h())) Some(s.h()) else find(s.t(), f)
+                }
+        return find(this, f)
     }
 
     companion object {
@@ -226,20 +253,6 @@ sealed class Stream<out A> {
             go(0, 1)
         }
 
-        /*
-          Create a new Stream[A] from this, but ignore the n first elements. This can be achieved by recursively calling
-          drop on the invoked tail of a cons cell. Note that the implementation is also tail recursive.
-        */
-        tailrec
-        fun <A> Stream<A>.drop(n: Int): Stream<A> =
-                when {
-                    this is Cons && n > 0 -> t().drop(n - 1)
-                    else -> this
-                }
-
-        fun <A> Stream<A>.append(s: () -> Stream<A>): Stream<A> =
-                foldRight(s) { h, t -> cons({ h }, t) }
-
         fun <A, S> unfold(z: S, f: (S) -> Option<Pair<A, S>>): Stream<A> {
             val p = f(z)
             return when (p) {
@@ -256,12 +269,6 @@ sealed class Stream<out A> {
 
         fun <A, S> unfoldViaMap(z: S, f: (S) -> Option<Pair<A, S>>): Stream<A> =
                 f(z).map { p: Pair<A, S> -> cons(p::first) { unfold(p.second, f) } }.getOrElse(::empty)
-
-        tailrec
-        fun <A> Stream<A>.find(f: (A) -> Boolean): Option<A> = when (this) {
-            is Empty -> None
-            is Cons -> if (f(h())) Some(h()) else t().find(f)
-        }
     }
 }
 

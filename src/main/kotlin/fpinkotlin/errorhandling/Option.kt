@@ -1,5 +1,7 @@
 package fpinkotlin.errorhandling
 
+import fpinkotlin.errorhandling.Option.Companion.map2
+import kotlin.math.abs
 import kotlin.math.pow
 
 sealed class Option<out A> {
@@ -125,3 +127,26 @@ sealed class Option<out A> {
 
 data class Some<out A>(val get: A) : Option<A>()
 object None : Option<Nothing>()
+
+fun <A, B> lift(f: (A) -> B): (Option<A>) -> Option<B> = { it.map(f) }
+
+val absO: (Option<Double>) -> Option<Double> = lift(::abs)
+
+/**
+ * Top secret formula for computing an annual car
+ * insurance premium from two key factors.
+ */
+fun insuranceRateQuote(age: Int, numberOfSpeedingTickets: Int): Double = TODO()
+
+fun parseInsuranceRateQuote(age: String, numberOfSpeedingTickets: String): Option<Double> {
+    val optAge: Option<Int> = Try { age.toInt() }
+    val optTickets: Option<Int> = Try { numberOfSpeedingTickets.toInt() }
+    return map2(optAge, optTickets, ::insuranceRateQuote)
+}
+
+fun <A> Try(a: () -> A): Option<A> =
+        try {
+            Some(a())
+        } catch (e: Exception) {
+            None
+        }
