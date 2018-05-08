@@ -43,18 +43,18 @@ class ListTest {
     private val list = List(1, 2, 3, 4)
 
     @Test
-    fun sumNumbers() {
+    fun `Sum the numbers in a list`() {
         assertEquals(10, sum(list))
     }
 
     @Test
-    fun productOfNumbers() {
+    fun `Get the product of all the numbers in a list`() {
         val dList = List(1.0, 2.0, 3.0, 4.0)
         assertEquals(24.0, product(dList), 0.01)
     }
 
     @Test
-    fun `append two lists`() {
+    fun `Append two lists`() {
         val list2 = List(5, 6, 7, 8)
         assertEquals(List(1, 2, 3, 4, 5, 6, 7, 8), append(list, list2))
     }
@@ -65,12 +65,12 @@ class ListTest {
     }
 
     @Test
-    fun sum2Numbers() {
+    fun `Sum2 the numbers in a list`() {
         assertEquals(10, sum2(list))
     }
 
     @Test
-    fun product2OfNumbers() {
+    fun `Get the product2 of all the numbers in a list`() {
         val dList = List(1.0, 2.0, 3.0, 4.0)
         assertEquals(24.0, product2(dList), 0.01)
     }
@@ -81,7 +81,7 @@ class ListTest {
     }
 
     @Test
-    fun `set the head of a list`() {
+    fun `Set the head of a list`() {
         assertEquals(List(5, 2, 3, 4), setHead(list, 5))
     }
 
@@ -96,17 +96,17 @@ class ListTest {
     }
 
     @Test
-    fun `get the init of a list`() {
+    fun `Get the init of a list`() {
         assertEquals(List(1, 2, 3), init(list))
     }
 
     @Test
-    fun `get the init of a list using TCO`() {
+    fun `Get the init of a list using TCO`() {
         assertEquals(List(1, 2, 3), init2(list))
     }
 
     @Test
-    fun `determine the length of a list`() {
+    fun `Determine the length of a list`() {
         assertEquals(4, length(list))
     }
 
@@ -116,18 +116,18 @@ class ListTest {
     }
 
     @Test
-    fun sum3Numbers() {
+    fun `Sum3 the numbers in a list`() {
         assertEquals(10, sum3(list))
     }
 
     @Test
-    fun product3OfNumbers() {
+    fun `Get the product3 of all the numbers in a list`() {
         val dList = List(1.0, 2.0, 3.0, 4.0)
         assertEquals(24.0, product3(dList), 0.01)
     }
 
     @Test
-    fun `determine the length2 of a list`() {
+    fun `Determine the length2 of a list`() {
         assertEquals(4, length2(list))
     }
 
@@ -164,12 +164,12 @@ class ListTest {
     }
 
     @Test
-    fun `add 1 to each element of a list`() {
+    fun `Add 1 to each element of a list`() {
         assertEquals(List(2, 3, 4, 5), add1(list))
     }
 
     @Test
-    fun `convert a list of doubles to a list of strings`() {
+    fun `Convert a list of doubles to a list of strings`() {
         val dList = List(1.0, 2.0, 3.0, 4.0)
         assertEquals(List("1.0", "2.0", "3.0", "4.0"), doubleToString(dList))
     }
@@ -215,7 +215,7 @@ class ListTest {
     }
 
     @Test
-    fun `add corresponding elements of two lists`() {
+    fun `Add corresponding elements of two lists`() {
         val list2 = List(10, 20, 30)
         assertEquals(List(11, 22, 33), addPairwise(list, list2))
     }
@@ -227,13 +227,13 @@ class ListTest {
     }
 
     @Test
-    fun `has a subsequence`() {
+    fun `Has a subsequence`() {
         val sub = List(3, 4)
         assertTrue(hasSubsequence(list, sub))
     }
 
     @Test
-    fun `does not have a subsequence`() {
+    fun `Does not have a subsequence`() {
         val sub = List(5, 4)
         assertFalse(hasSubsequence(list, sub))
     }
